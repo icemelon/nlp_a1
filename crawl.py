@@ -144,28 +144,4 @@ if __name__ == "__main__":
   while not stop:
     crawl(date)
     date -= datetime.timedelta(days=1)
-    break    
-
   print("Crawler stopped!")
-
-"""    
-today = datetime.date.today()
-print(today)
-exit()
-
-url = "http://www.nytimes.com/2016/01/21/us/crumbling-destitute-schools-threaten-detroits-recovery.html"
-print(url)
-
-
-#resp = urllib2.urlopen(url)
-#html_text = resp.read()
-#print(html_text)
-
-parser = IndexParser()
-parser.feed(html_text)
-print(parser.links)
-
-parser = ArticleParser()
-parser.feed(html_text)
-print parser.text
-"""
