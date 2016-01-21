@@ -97,7 +97,10 @@ def load_index(date):
   
   links = []
   for link in parser.links:
-    links.append(link[:link.index("?")])
+    if '?' in link:
+      links.append(link[:link.index("?")])
+    else:
+      links.append(link)
   with open(index_file, 'w') as f:
     f.write("\n".join(links))
   return links
@@ -156,6 +159,10 @@ if __name__ == "__main__":
     os.mkdir("data")
   global stop
   stop = False
+  date = datetime.date(2015, 1, 14)
+  print(date)
+  crawl(date)
+  exit()
   date = datetime.date.today()
   signal.signal(signal.SIGINT, signal_handler)
 
