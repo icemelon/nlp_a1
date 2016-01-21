@@ -8,6 +8,8 @@ import signal
 import urllib2
 from cookielib import CookieJar
 from HTMLParser import HTMLParser
+from threading import Thread
+from queue import Queue
 
 Ignore = 0
 Frontpage = 1
@@ -122,13 +124,27 @@ def fetch_articles(date, links):
       with codecs.open(fn, "w", "utf-8") as f:
         f.write(parser.text)
 
-    
+
 def crawl(date):
   print("Crawl ariticles on %s" % date)
   links = load_index(date)
   fetch_articles(date, links)
 
-  
+
+class Worker(Thread):
+  def __init__(self, queue):
+    Thread.__init__(self)
+    self.daemon = True
+    self.queue = queue
+
+  def run(self):
+    global stop
+    while not stop:
+      date = self.queue.get()
+      crawl(date)
+      self.queue.task_done()
+
+
 def signal_handler(signal, frame):
   global stop
   stop = True
@@ -142,7 +158,16 @@ if __name__ == "__main__":
   stop = False
   date = datetime.date.today()
   signal.signal(signal.SIGINT, signal_handler)
+
+  num_threads = 5
+  queue = Queue(num_threads)
+  for _ in range(num_threads):
+    t = Worker(queue)
+    t.start()
+    
   while not stop:
-    crawl(date)
+    #crawl(date)
+    queue.put(date)
+    print("Enqueued %s" % date)
     date -= datetime.timedelta(days=1)
   print("Crawler stopped!")
