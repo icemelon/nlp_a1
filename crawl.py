@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import time
+import codecs
 import datetime
 import signal
 import urllib2
@@ -114,11 +115,11 @@ def fetch_articles(date, links):
       cj = CookieJar()
       opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
       resp = opener.open(link)
-      html = resp.read()
+      html = resp.read().decode("utf8")
       # extract text
       parser = ArticleParser()
       parser.feed(html)
-      with open(fn, 'w') as f:
+      with codecs.open(fn, "w", "utf-8") as f:
         f.write(parser.text)
 
     
