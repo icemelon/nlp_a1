@@ -9,7 +9,7 @@ import urllib2
 from cookielib import CookieJar
 from HTMLParser import HTMLParser
 from threading import Thread
-from queue import Queue
+from multiprocessing import Queue
 
 Ignore = 0
 Frontpage = 1
@@ -78,7 +78,7 @@ class ArticleParser(HTMLParser):
 
       
 def load_index(date):
-  date_str = "%s%s%s" % (date.year, date.month, date.day)
+  date_str = "%s%02d%02d" % (date.year, date.month, date.day)
   index_file = os.path.join("data", "index_%s.txt" % date_str)
   if os.path.exists(index_file):
     print("Load index file %s" % index_file)
@@ -108,7 +108,7 @@ def load_index(date):
 
 def fetch_articles(date, links):
   global stop
-  date_str = "%s%s%s" % (date.year, date.month, date.day)
+  date_str = "%s%02d%02d" % (date.year, date.month, date.day)
   datadir = os.path.join("data", date_str)
   if not os.path.exists(datadir):
     os.mkdir(datadir)
@@ -143,9 +143,11 @@ class Worker(Thread):
   def run(self):
     global stop
     while not stop:
-      date = self.queue.get()
-      crawl(date)
-      self.queue.task_done()
+      try:
+        args = self.queue.get(timeout=0.1)
+      except Queue.Empty:
+        continue
+      crawl(args)
 
 
 def signal_handler(signal, frame):
@@ -157,24 +159,26 @@ def signal_handler(signal, frame):
 if __name__ == "__main__":
   if not os.path.exists("data"):
     os.mkdir("data")
+
+  # install stop handler
   global stop
   stop = False
-  date = datetime.date(2015, 1, 14)
-  print(date)
-  crawl(date)
-  exit()
-  date = datetime.date.today()
   signal.signal(signal.SIGINT, signal_handler)
 
-  num_threads = 5
+  # init thread pool
+  num_threads = 8
   queue = Queue(num_threads)
   for _ in range(num_threads):
     t = Worker(queue)
     t.start()
-    
-  while not stop:
-    #crawl(date)
+
+  date = datetime.date.today()    
+  while True:
+    while queue.full() and not stop:
+      time.sleep(0.1)
+    if stop: break
     queue.put(date)
     print("Enqueued %s" % date)
     date -= datetime.timedelta(days=1)
+
   print("Crawler stopped!")
