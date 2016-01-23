@@ -9,7 +9,11 @@ import urllib2
 from cookielib import CookieJar
 from HTMLParser import HTMLParser
 from threading import Thread
-from multiprocessing import Queue
+#from multiprocessing import Queue
+from Queue import Queue, Empty
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 Ignore = 0
 Frontpage = 1
@@ -145,9 +149,10 @@ class Worker(Thread):
     while not stop:
       try:
         args = self.queue.get(timeout=0.1)
-      except Queue.Empty:
+      except Empty:
         continue
       crawl(args)
+      queue.task_done()
 
 
 def signal_handler(signal, frame):
@@ -166,7 +171,7 @@ if __name__ == "__main__":
   signal.signal(signal.SIGINT, signal_handler)
 
   # init thread pool
-  num_threads = 8
+  num_threads = 5
   queue = Queue(num_threads)
   for _ in range(num_threads):
     t = Worker(queue)
