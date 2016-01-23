@@ -8,9 +8,7 @@ from corpus import *
 StartSymbol = '\u0002'
 StopSymbol = '\u0003'
 
-
-def train_bigram(corpus):
-  model = {}
+def train_bigram(model, corpus):
   for text in corpus:
     text = StartSymbol + text + StopSymbol
     for i in range(1, len(text)):
@@ -20,10 +18,8 @@ def train_bigram(corpus):
       if now not in model: model[now] = 0
       model[prev] += 1
       model[now] += 1
-  return model
 
-def train_trigram(corpus):
-  model = {}
+def train_trigram(model, corpus):
   for text in corpus:
     text = StartSymbol*2 + text + StopSymbol
     for i in range(2, len(text)):
@@ -36,19 +32,21 @@ def train_trigram(corpus):
 
 if __name__ == "__main__":
   if len(sys.argv) < 2:
-    print("%s 2/3" % sys.argv[0])
+    print("%s bi/tri" % sys.argv[0])
     exit()
     
   option = sys.argv[1]
   model_file = None
-  model = None
+  model = {}
   
-  if option == '2':
+  if option == 'bi':
     model_file = "bigram_model.bin"
-    model = train_bigram(helio_corpus())
-  elif option == '3':
+    train_bigram(model, bible_corpus())
+    train_bigram(model, helio_corpus())
+  elif option == 'tri':
     model_file = "trigram_model.bin"
-    model = train_trigram(helio_corpus())
+    train_trigram(model, bible_corpus())
+    train_trigram(model, helio_corpus())
   else:
     print("Wrong option: %s" % option)
     exit()
